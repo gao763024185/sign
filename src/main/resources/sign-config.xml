@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+	http://www.springframework.org/schema/mvc
+    http://www.springframework.org/schema/mvc/spring-mvc-4.0.xsd
+    http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+
+    <context:component-scan base-package="com.cloudm.sign"/>
+
+
+    <!--拦截器用于拦截所有的请求校验token-->
+    <bean class="org.springframework.web.servlet.handler.BeanNameUrlHandlerMapping">
+        <property name="interceptors" ref="tokenValidateInterceptor"/>
+    </bean>
+    <bean id="tokenValidateInterceptor" class="com.cloudm.sign.interceptor.TokenValidateInterceptor">
+        <!-- 需要注入DefaultTokenHelper子类的bean，且bean的id为tokenHelper-->
+        <property name="defaultTokenHelper" ref="tokenHelper"/>
+        <!-- 需要注入DefaultContextHolder子类的bean，且bean的id为contextHolder-->
+        <property name="defaultContextHolder" ref="contextHolder"/>
+        <!-- 此处为是否开启token认证-->
+        <property name="tokenEnable" value="${token.enable}"/>
+    </bean>
+
+
+    <!--拦截器用于拦截指定的接口进行安全保护-->
+    <bean class="org.springframework.web.servlet.handler.BeanNameUrlHandlerMapping">
+        <property name="interceptors" ref="httpRequestValidateInterceptor"/>
+    </bean>
+    <bean id="httpRequestValidateInterceptor" class="com.cloudm.sign.interceptor.HttpRequestValidateInterceptor">
+    </bean>
+
+    <mvc:interceptors>
+        <mvc:interceptor>
+            <mvc:mapping path="/**"/>
+            <mvc:exclude-mapping path="/"/>
+            <mvc:exclude-mapping path="/remoting/**"/>
+            <mvc:exclude-mapping path="/excluded/**"/>
+            <ref bean="tokenValidateInterceptor"/>
+        </mvc:interceptor>
+        <mvc:interceptor>
+            <mvc:mapping path="/**"/>
+            <mvc:exclude-mapping path="/"/>
+            <ref bean="httpRequestValidateInterceptor"/>
+        </mvc:interceptor>
+    </mvc:interceptors>
+
+</beans>
+
